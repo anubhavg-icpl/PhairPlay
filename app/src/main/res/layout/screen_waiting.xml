@@ -98,16 +98,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Creator watermark — bottom-end corner -->
-    <TextView
-        android:id="@+id/text_creator_watermark"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/waiting_creator_watermark"
-        android:textColor="@color/creator_watermark"
-        android:textSize="12sp"
-        android:fontFamily="sans-serif"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

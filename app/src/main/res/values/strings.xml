@@ -22,8 +22,6 @@
     <string name="home_title">Ready for connections</string>
     <!-- %1$s = device name shown in sender pickers -->
     <string name="home_device_visible_as">Visible as: %1$s</string>
-    <!-- Creator watermark on home screen -->
-    <string name="home_creator_watermark">by Anubhav Gain</string>
 
     <!-- ── Protocol names ──────────────────────────────────────── -->
     <string name="protocol_airplay">AirPlay</string>
@@ -41,7 +39,7 @@
     <string name="protocol_detail_waiting">Waiting for sender…</string>
     <!-- %1$s = sender display name -->
     <string name="protocol_detail_connected">Streaming from %1$s</string>
-    <string name="protocol_detail_error">Check Wi-Fi settings</string>
+    <string name="protocol_detail_error">Network error — check connection</string>
 
     <!-- ── Service states (header badge) ───────────────────────── -->
     <string name="service_state_running">Running</string>
@@ -107,7 +105,6 @@
     <string name="waiting_title">Ready for AirPlay</string>
     <string name="waiting_subtitle">Open AirPlay on your Mac or iPhone and select this device</string>
     <string name="waiting_device_label">This device:</string>
-    <string name="waiting_creator_watermark">by Anubhav Gain</string>
     <string name="streaming_hint">Press Back to stop streaming</string>
 
     <!-- ── Error messages ──────────────────────────────────────── -->

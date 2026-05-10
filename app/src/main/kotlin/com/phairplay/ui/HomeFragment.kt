@@ -175,6 +175,20 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             svc.castState.collectLatest { state -> updateProtocolCard(cardCast, state, Protocol.CAST) }
         }
+        // Update detail text with real sender name when a connection is active
+        viewLifecycleOwner.lifecycleScope.launch {
+            svc.activeConnection.collectLatest { connection ->
+                if (connection != null) {
+                    val card = when (connection.protocol) {
+                        Protocol.AIRPLAY  -> cardAirPlay
+                        Protocol.MIRACAST -> cardMiracast
+                        Protocol.CAST     -> cardCast
+                    }
+                    card.findViewById<android.widget.TextView>(R.id.text_protocol_detail)?.text =
+                        getString(R.string.protocol_detail_connected, connection.senderName)
+                }
+            }
+        }
     }
 
     /**

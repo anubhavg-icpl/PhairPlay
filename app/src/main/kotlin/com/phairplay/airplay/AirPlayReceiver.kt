@@ -150,7 +150,21 @@ class AirPlayReceiver(
     private fun startMdnsService() {
         mdnsService = MdnsService(
             context = context,
-            onStateChange = { state -> emitState(state) },
+            onStateChange = { state ->
+                if (state == com.phairplay.service.ProtocolState.ERROR) {
+                    // mDNS registration failed — retry after 3 s (NSD daemon may be starting up)
+                    Logger.w("mDNS registration failed, retrying in 3 s")
+                    scope.launch {
+                        kotlinx.coroutines.delay(3_000)
+                        if (scope.isActive) {
+                            Logger.i("Retrying mDNS registration")
+                            mdnsService?.restart(displayName.ifBlank { null })
+                        }
+                    }
+                } else {
+                    emitState(state)
+                }
+            },
             ltpk = pairing.getLtpk(),
             onActualNameRegistered = { actualName -> onActualNameRegistered(actualName) }
         ).also { it.start(displayName.ifBlank { null }) }

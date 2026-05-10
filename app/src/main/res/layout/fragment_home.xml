@@ -207,20 +207,6 @@
                 android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusLeft="@id/btn_stop" />
 
-            <!-- Spacer + creator watermark, right-aligned -->
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/home_creator_watermark"
-                android:textColor="@color/creator_watermark"
-                android:textSize="12sp"
-                android:fontFamily="sans-serif"
-                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 

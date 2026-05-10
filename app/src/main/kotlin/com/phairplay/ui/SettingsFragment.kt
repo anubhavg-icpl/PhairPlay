@@ -73,12 +73,15 @@ class SettingsFragment : Fragment() {
     // ─── View Binding ────────────────────────────────────────────────────────
 
     private fun bindViews(view: View) {
-        headerDisplay   = view.findViewById<View>(R.id.header_display).findViewById(R.id.text_section_title)
-        headerProtocols = view.findViewById<View>(R.id.header_protocols).findViewById(R.id.text_section_title)
-        headerAirPlay   = view.findViewById<View>(R.id.header_airplay).findViewById(R.id.text_section_title)
-        headerService   = view.findViewById<View>(R.id.header_service).findViewById(R.id.text_section_title)
-        headerDeveloper = view.findViewById<View>(R.id.header_developer).findViewById(R.id.text_section_title)
-        headerAbout     = view.findViewById<View>(R.id.header_about).findViewById(R.id.text_section_title)
+        // <include android:id="@+id/header_*"> replaces the root view's ID, so the
+        // TextView in settings_section_header.xml IS the view at id header_*. Do NOT
+        // call a second .findViewBYid(text_section_title) — that always returns null.
+        headerDisplay   = view.findViewById(R.id.header_display)
+        headerProtocols = view.findViewById(R.id.header_protocols)
+        headerAirPlay   = view.findViewById(R.id.header_airplay)
+        headerService   = view.findViewById(R.id.header_service)
+        headerDeveloper = view.findViewById(R.id.header_developer)
+        headerAbout     = view.findViewById(R.id.header_about)
 
         rowDisplayName      = view.findViewById(R.id.row_display_name)
         textDisplayNameValue = view.findViewById(R.id.text_display_name_value)
