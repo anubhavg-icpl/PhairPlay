@@ -14,6 +14,7 @@ plugins {
 android {
     namespace = "com.phairplay"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         // applicationId is overridden per flavor below
@@ -54,6 +55,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a")
+            isUniversalApk = false
         }
     }
 
@@ -153,6 +163,7 @@ dependencies {
     // Unit Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
 
     // Instrumented Testing (on device)
