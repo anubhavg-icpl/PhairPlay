@@ -3,7 +3,7 @@
     focus_ring_selector.xml — Focus state drawable for all interactive TV elements.
 
     Applies a visible blue border when a view has D-pad focus.
-    This is the primary focus indicator for PhairPlay's TV UI.
+    This is the primary focus indicator for Aervox's TV UI.
     All interactive views (buttons, cards, toggles) must use this as their background.
 
     Usage in layout XML:
