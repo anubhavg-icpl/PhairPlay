@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        Base theme — dark TV theme based on Google TV Streamer design language.
-        - True black background for OLED-friendly displays
-        - Accent blue for focus and active states
-        - Leanback parent for D-pad / TV launcher compatibility
+        Base theme — dark TV theme, Google TV design language.
+        Deep navy background for premium feel on OLED and LCD TV panels.
+        Accent blue for focus and active states.
+        Leanback parent for D-pad / TV launcher compatibility.
     -->
     <style name="Theme.PhairPlay" parent="@style/Theme.AppCompat.Leanback">
         <item name="android:windowBackground">@color/background_dark</item>
@@ -15,6 +15,8 @@
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="android:statusBarColor">@color/background_dark</item>
         <item name="android:navigationBarColor">@color/background_dark</item>
+        <!-- Focus/animation timing tokens -->
+        <item name="android:animationDuration">220</item>
     </style>
 
     <!-- Fullscreen theme: hides status bar for StreamingScreen -->
