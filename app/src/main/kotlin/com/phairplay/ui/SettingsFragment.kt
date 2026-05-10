@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.Switch
+import com.google.android.material.materialswitch.MaterialSwitch
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -160,7 +160,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun setToggle(row: View, value: Boolean) {
-        row.findViewById<Switch>(R.id.switch_setting)?.isChecked = value
+        row.findViewById<MaterialSwitch>(R.id.switch_setting)?.isChecked = value
     }
 
     /**
@@ -186,7 +186,7 @@ class SettingsFragment : Fragment() {
     private fun setToggleListener(row: View, onChanged: (Boolean) -> Unit) {
         // The whole row is clickable (better TV UX than just the Switch widget)
         row.setOnClickListener {
-            val switch = row.findViewById<Switch>(R.id.switch_setting) ?: return@setOnClickListener
+            val switch = row.findViewById<MaterialSwitch>(R.id.switch_setting) ?: return@setOnClickListener
             val newValue = !switch.isChecked
             switch.isChecked = newValue
             onChanged(newValue)

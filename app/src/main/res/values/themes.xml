@@ -6,7 +6,7 @@
         Accent blue for focus and active states.
         Leanback parent for D-pad / TV launcher compatibility.
     -->
-    <style name="Theme.PhairPlay" parent="@style/Theme.AppCompat.Leanback">
+    <style name="Theme.PhairPlay" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="android:colorPrimary">@color/accent_blue</item>
         <item name="android:colorPrimaryDark">@color/background_dark</item>

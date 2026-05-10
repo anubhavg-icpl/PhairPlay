@@ -168,47 +168,41 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_start"
                 android:layout_width="wrap_content"
                 android:layout_height="52dp"
                 android:layout_marginEnd="12dp"
                 android:paddingHorizontal="28dp"
                 android:text="@string/action_start"
-                android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:fontFamily="sans-serif-medium"
-                android:background="@drawable/btn_control_selector"
                 android:focusable="true"
                 android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusRight="@id/btn_stop" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_stop"
                 android:layout_width="wrap_content"
                 android:layout_height="52dp"
                 android:layout_marginEnd="12dp"
                 android:paddingHorizontal="28dp"
                 android:text="@string/action_stop"
-                android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:fontFamily="sans-serif-medium"
-                android:background="@drawable/btn_control_selector"
                 android:focusable="true"
                 android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusLeft="@id/btn_start"
                 android:nextFocusRight="@id/btn_restart" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_restart"
                 android:layout_width="wrap_content"
                 android:layout_height="52dp"
                 android:paddingHorizontal="28dp"
                 android:text="@string/action_restart"
-                android:textColor="@color/text_primary"
                 android:textSize="17sp"
                 android:fontFamily="sans-serif-medium"
-                android:background="@drawable/btn_control_selector"
                 android:focusable="true"
                 android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusLeft="@id/btn_stop" />

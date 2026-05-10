@@ -12,23 +12,31 @@
 
     When D-pad focused: blue border ring + 5% scale up (tv_focus_scale animator)
 -->
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="@drawable/focus_ring_selector"
     android:focusable="true"
-    android:stateListAnimator="@animator/tv_focus_scale">
+    android:stateListAnimator="@animator/tv_focus_scale"
+    app:cardBackgroundColor="@color/background_surface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="0dp">
 
-    <!-- Icon row: tinted container + protocol name side-by-side -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="14dp">
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Icon row: tinted container + protocol name side-by-side -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
 
         <!-- Icon container: neutral dark rounded square, icon set programmatically -->
         <FrameLayout
@@ -91,4 +99,5 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-</LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

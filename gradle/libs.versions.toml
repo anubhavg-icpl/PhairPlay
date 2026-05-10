@@ -8,8 +8,9 @@ agp = "8.6.1"                          # Android Gradle Plugin
 kotlin = "1.9.23"                      # Kotlin compiler
 desugar-jdk-libs = "2.0.4"            # Core library desugaring (backports Java 8+ APIs to API 25)
 
-# AndroidX
+# AndroidX                                                                                                                       
 appcompat = "1.7.0"
+material = "1.12.0"
 constraintlayout = "2.1.4"
 core-ktx = "1.13.1"
 leanback = "1.2.0"                     # TV navigation, focus management, on-screen keyboard
@@ -34,9 +35,10 @@ robolectric = "4.12.2"
 androidx-test-ext = "1.1.5"
 espresso = "3.5.1"
 
-[libraries]
-# AndroidX
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+[libraries]                                                                                                                      
+# AndroidX                                                                                                                       
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }                             
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 androidx-leanback = { group = "androidx.leanback", name = "leanback", version.ref = "leanback" }

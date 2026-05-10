@@ -140,11 +140,11 @@ dependencies {
     // Core library desugaring — backports java.util.Base64, java.time.*, etc. to API 25
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
-    // AndroidX UI (View-based, for maximum TV compatibility)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.core.ktx)
-
+        // AndroidX UI (View-based, for maximum TV compatibility)                                                                    
+        implementation(libs.androidx.appcompat)                                                                                      
+        implementation(libs.androidx.constraintlayout)                                                                               
+        implementation(libs.androidx.core.ktx)                                                                                       
+        implementation(libs.material)
     // Leanback — TV focus management, on-screen keyboard, TV-specific widgets
     implementation(libs.androidx.leanback)
 

@@ -10,11 +10,11 @@ import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.phairplay.R
 import com.phairplay.service.PhairPlayService
 import com.phairplay.service.Protocol
@@ -66,9 +66,9 @@ class HomeFragment : Fragment() {
     private lateinit var cardAirPlay: View
     private lateinit var cardMiracast: View
     private lateinit var cardCast: View
-    private lateinit var btnStart: Button
-    private lateinit var btnStop: Button
-    private lateinit var btnRestart: Button
+    private lateinit var btnStart: MaterialButton
+    private lateinit var btnStop: MaterialButton
+    private lateinit var btnRestart: MaterialButton
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
         inflater.inflate(R.layout.fragment_home, container, false)
