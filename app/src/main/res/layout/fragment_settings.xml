@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    fragment_settings.xml — Settings screen layout.
+    fragment_settings.xml — Settings screen.
 
-    Organized into sections matching the AppSettings data model:
-    1. Display — device name shown in pickers
-    2. Protocols — enable/disable AirPlay, Miracast, Cast
-    3. AirPlay — PIN authentication
-    4. Service — start on boot
-    5. Developer — debug overlay
-    6. About — version info, reset
+    Sections:
+    1. Display      — device name shown in pickers
+    2. Protocols    — enable/disable AirPlay, Miracast, Cast
+    3. AirPlay      — PIN authentication
+    4. Service      — start on boot
+    5. Developer    — debug overlay
+    6. About        — creator info, version, reset
 -->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -21,7 +21,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="32dp">
+        android:paddingStart="36dp"
+        android:paddingEnd="36dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="36dp">
 
         <!-- Page title -->
         <TextView
@@ -29,15 +32,15 @@
             android:layout_height="wrap_content"
             android:text="@string/nav_settings"
             android:textColor="@color/text_primary"
-            android:textSize="32sp"
-            android:fontFamily="sans-serif-light"
-            android:layout_marginBottom="32dp" />
+            android:textSize="36sp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02"
+            android:layout_marginBottom="36dp" />
 
         <!-- ── Section: Display ────────────────────────────────── -->
         <include layout="@layout/settings_section_header"
             android:id="@+id/header_display" />
 
-        <!-- Display name row -->
         <LinearLayout
             android:id="@+id/row_display_name"
             android:layout_width="match_parent"
@@ -46,7 +49,8 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
             android:background="@drawable/focus_ring_selector"
-            android:focusable="true">
+            android:focusable="true"
+            android:stateListAnimator="@animator/tv_focus_scale">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -79,7 +83,7 @@
         <!-- ── Section: Protocols ─────────────────────────────── -->
         <include layout="@layout/settings_section_header"
             android:id="@+id/header_protocols"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="28dp" />
 
         <include layout="@layout/settings_toggle_row"
             android:id="@+id/row_airplay"
@@ -99,7 +103,7 @@
         <!-- ── Section: AirPlay ───────────────────────────────── -->
         <include layout="@layout/settings_section_header"
             android:id="@+id/header_airplay"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="28dp" />
 
         <include layout="@layout/settings_toggle_row"
             android:id="@+id/row_airplay_pin"
@@ -109,7 +113,7 @@
         <!-- ── Section: Service ───────────────────────────────── -->
         <include layout="@layout/settings_section_header"
             android:id="@+id/header_service"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="28dp" />
 
         <include layout="@layout/settings_toggle_row"
             android:id="@+id/row_start_on_boot"
@@ -119,7 +123,7 @@
         <!-- ── Section: Developer ─────────────────────────────── -->
         <include layout="@layout/settings_section_header"
             android:id="@+id/header_developer"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="28dp" />
 
         <include layout="@layout/settings_toggle_row"
             android:id="@+id/row_debug_overlay"
@@ -129,8 +133,62 @@
         <!-- ── Section: About ─────────────────────────────────── -->
         <include layout="@layout/settings_section_header"
             android:id="@+id/header_about"
-            android:layout_marginTop="24dp" />
+            android:layout_marginTop="28dp" />
 
+        <!-- Creator block -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="16dp"
+            android:background="@drawable/focus_ring_selector"
+            android:focusable="false"
+            android:layout_marginBottom="4dp">
+
+            <!-- "Creator" label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/about_creator_label"
+                android:textColor="@color/text_tertiary"
+                android:textSize="11sp"
+                android:textAllCaps="true"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Creator name -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/about_creator_name"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <!-- Role -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/about_creator_role"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <!-- GitHub link -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/about_creator_github"
+                android:textColor="@color/creator_accent"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif" />
+
+        </LinearLayout>
+
+        <!-- Version row -->
         <LinearLayout
             android:id="@+id/row_version"
             android:layout_width="match_parent"
@@ -157,6 +215,7 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
+        <!-- Reset row -->
         <LinearLayout
             android:id="@+id/row_reset"
             android:layout_width="match_parent"
@@ -165,7 +224,8 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
             android:background="@drawable/focus_ring_selector"
-            android:focusable="true">
+            android:focusable="true"
+            android:stateListAnimator="@animator/tv_focus_scale">
 
             <TextView
                 android:layout_width="match_parent"

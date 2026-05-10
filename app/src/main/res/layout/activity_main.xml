@@ -2,19 +2,14 @@
 <!--
     activity_main.xml — Root layout for MainActivity.
 
-    Layout structure (Google TV Streamer style):
-    ┌──────────┬─────────────────────────────────────────┐
-    │  NAV     │                                         │
-    │  PANEL   │     CONTENT AREA                        │
-    │          │   (fragment container)                  │
-    │  Home    │                                         │
-    │  Settings│                                         │
-    │          │                                         │
-    └──────────┴─────────────────────────────────────────┘
-
-    - Left: narrow navigation panel (always visible on TV, unlike hamburger on phone)
-    - Right: fragment container switches between HomeFragment and SettingsFragment
-    - The streaming_container overlays everything (full-screen, GONE when idle)
+    ┌──────────────┬────────────────────────────────────────────┐
+    │  Aervox      │                                            │
+    │  by Anubhav  │     CONTENT AREA                           │
+    │  ─────────── │   (HomeFragment / SettingsFragment)        │
+    │  🏠 Home     │                                            │
+    │  ⚙ Settings  │                                            │
+    │              │                                            │
+    └──────────────┴────────────────────────────────────────────┘
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -26,38 +21,61 @@
     <!-- ── Left navigation panel ──────────────────────────────────────── -->
     <LinearLayout
         android:id="@+id/nav_panel"
-        android:layout_width="200dp"
+        android:layout_width="220dp"
         android:layout_height="0dp"
         android:orientation="vertical"
         android:background="@color/nav_panel_background"
-        android:paddingTop="48dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="24dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <!-- App name header -->
+        <!-- App wordmark block -->
         <TextView
             android:id="@+id/nav_app_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
             android:text="@string/app_name"
             android:textColor="@color/text_primary"
-            android:textSize="22sp"
-            android:fontFamily="sans-serif-medium" />
+            android:textSize="26sp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02" />
+
+        <!-- Creator tagline -->
+        <TextView
+            android:id="@+id/nav_creator_tagline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/nav_tagline"
+            android:textColor="@color/creator_watermark"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif" />
+
+        <!-- Divider under wordmark -->
+        <View
+            android:layout_width="32dp"
+            android:layout_height="2dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="24dp"
+            android:background="@color/accent_blue" />
 
         <!-- Home nav item -->
         <TextView
             android:id="@+id/nav_item_home"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="52dp"
             android:gravity="center_vertical"
             android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:text="@string/nav_home"
-            android:textSize="18sp"
+            android:textSize="17sp"
             android:textColor="@color/nav_item_normal"
+            android:drawableStart="@drawable/ic_nav_home"
+            android:drawablePadding="12dp"
             android:background="@drawable/nav_item_selector"
             android:focusable="true"
             android:nextFocusDown="@id/nav_item_settings"
@@ -67,13 +85,16 @@
         <TextView
             android:id="@+id/nav_item_settings"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="52dp"
             android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:text="@string/nav_settings"
-            android:textSize="18sp"
+            android:textSize="17sp"
             android:textColor="@color/nav_item_normal"
+            android:drawableStart="@drawable/ic_nav_settings"
+            android:drawablePadding="12dp"
             android:background="@drawable/nav_item_selector"
             android:focusable="true"
             android:nextFocusUp="@id/nav_item_home"
@@ -81,7 +102,7 @@
 
     </LinearLayout>
 
-    <!-- Vertical divider between nav and content -->
+    <!-- Vertical divider -->
     <View
         android:id="@+id/nav_divider"
         android:layout_width="1dp"
@@ -91,7 +112,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/nav_panel" />
 
-    <!-- ── Main content area (fragments swap here) ────────────────────── -->
+    <!-- ── Main content area ──────────────────────────────────────────── -->
     <FrameLayout
         android:id="@+id/content_container"
         android:layout_width="0dp"

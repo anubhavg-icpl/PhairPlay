@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    screen_waiting.xml — Layout for the WaitingScreen.
-
-    Shows the app name, device name, and usage instructions centered on screen.
-    Designed for TV: large text, high contrast, readable from 3 meters away.
+    screen_waiting.xml — Waiting / streaming idle screen.
+    Full-screen branding: Aervox wordmark, device name, subtitle.
+    Creator watermark pinned to bottom-end corner.
+    Large text (10-foot readable from 3m).
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -11,63 +11,103 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_dark"
-    android:padding="48dp">
+    android:padding="56dp">
 
-    <!-- App name / logo placeholder -->
+    <!-- Accent line — top-left decoration -->
+    <View
+        android:id="@+id/accent_bar"
+        android:layout_width="48dp"
+        android:layout_height="3dp"
+        android:background="@color/accent_blue"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- App wordmark — centered vertically, slightly above center -->
     <TextView
         android:id="@+id/text_app_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/app_name"
         android:textColor="@color/text_primary"
-        android:textSize="48sp"
-        android:fontFamily="sans-serif-light"
+        android:textSize="56sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="-0.02"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/text_app_tagline"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/text_device_label" />
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.42" />
+
+    <!-- AirPlay · Miracast · Cast tagline -->
+    <TextView
+        android:id="@+id/text_app_tagline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/app_tagline"
+        android:textColor="@color/creator_accent"
+        android:textSize="16sp"
+        android:fontFamily="sans-serif"
+        android:letterSpacing="0.06"
+        app:layout_constraintTop_toBottomOf="@id/text_app_name"
+        app:layout_constraintBottom_toTopOf="@id/text_device_label"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- "This device:" label -->
     <TextView
         android:id="@+id/text_device_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="40dp"
         android:text="@string/waiting_device_label"
         android:textColor="@color/text_secondary"
         android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@id/text_app_name"
+        app:layout_constraintTop_toBottomOf="@id/text_app_tagline"
+        app:layout_constraintBottom_toTopOf="@id/text_device_name"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/text_device_name" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- The device's AirPlay name (populated by WaitingScreen.kt) -->
+    <!-- Device's AirPlay name (set by WaitingScreen.kt) -->
     <TextView
         android:id="@+id/text_device_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:textColor="@color/accent_blue"
-        android:textSize="32sp"
+        android:textSize="36sp"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintTop_toBottomOf="@id/text_device_label"
+        app:layout_constraintBottom_toTopOf="@id/text_subtitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/text_subtitle" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Instructions for the user -->
+    <!-- Instructions -->
     <TextView
         android:id="@+id/text_subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="40dp"
         android:text="@string/waiting_subtitle"
         android:textColor="@color/text_secondary"
         android:textSize="20sp"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/text_device_name"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Creator watermark — bottom-end corner -->
+    <TextView
+        android:id="@+id/text_creator_watermark"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/waiting_creator_watermark"
+        android:textColor="@color/creator_watermark"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

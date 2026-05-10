@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    fragment_home.xml — HomeFragment layout (Google TV Streamer style).
+    fragment_home.xml — HomeFragment layout.
 
-    Layout:
     ┌──────────────────────────────────────────────────────────┐
-    │  "Ready for connections"           [●] Service Running   │
+    │  Aervox                            [● Service Running]   │
+    │  AirPlay · Miracast · Cast                               │
+    │  Visible as: Living Room TV                              │
     │                                                          │
-    │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐       │
-    │  │  📺 AirPlay │ │  📡 Miracast│ │  🔵 Cast    │       │
-    │  │  ●Running   │ │  ●Running   │ │  ●Running   │       │
-    │  │  Waiting... │ │  Waiting... │ │  Waiting... │       │
-    │  └─────────────┘ └─────────────┘ └─────────────┘       │
+    │  PROTOCOLS                                               │
+    │  ┌────────────┐ ┌────────────┐ ┌────────────┐           │
+    │  │ [AP icon]  │ │ [MC icon]  │ │ [Cast icon]│           │
+    │  │ AirPlay    │ │ Miracast   │ │ Cast       │           │
+    │  │ ●Running   │ │ ●Running   │ │ ●Running   │           │
+    │  │ Waiting... │ │ Waiting... │ │ Waiting... │           │
+    │  └────────────┘ └────────────┘ └────────────┘           │
     │                                                          │
-    │  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-    │  │  ▶ Start │  │  ■ Stop  │  │  ↺ Restart│             │
-    │  └──────────┘  └──────────┘  └──────────┘              │
+    │  SERVICE CONTROL                                         │
+    │  [▶ Start]  [■ Stop]  [↺ Restart]    by Anubhav Gain    │
     └──────────────────────────────────────────────────────────┘
 -->
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_dark"
@@ -29,16 +30,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="32dp">
+        android:paddingStart="36dp"
+        android:paddingEnd="36dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="28dp">
 
-        <!-- ── Header row ──────────────────────────────────────────────── -->
+        <!-- ── Header ──────────────────────────────────────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="32dp">
+            android:layout_marginBottom="36dp">
 
+            <!-- Left: wordmark + device name -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -49,21 +54,32 @@
                     android:id="@+id/text_page_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/home_title"
+                    android:text="@string/app_name"
                     android:textColor="@color/text_primary"
-                    android:textSize="32sp"
-                    android:fontFamily="sans-serif-light" />
+                    android:textSize="40sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="-0.02" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/app_tagline"
+                    android:textColor="@color/creator_accent"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:letterSpacing="0.04" />
 
                 <TextView
                     android:id="@+id/text_device_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="8dp"
                     android:textColor="@color/text_secondary"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
-            <!-- Global service state badge -->
+            <!-- Right: service state badge -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -75,8 +91,8 @@
 
                 <View
                     android:id="@+id/dot_service_state"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
+                    android:layout_width="9dp"
+                    android:layout_height="9dp"
                     android:background="@drawable/status_dot"
                     android:layout_marginEnd="8dp" />
 
@@ -86,20 +102,21 @@
                     android:layout_height="wrap_content"
                     android:text="@string/service_state_stopped"
                     android:textColor="@color/text_secondary"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- ── Section: Protocol status cards ────────────────────────── -->
+        <!-- ── Section: Protocol cards ──────────────────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/section_protocols"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp"
             android:textAllCaps="true"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="12dp" />
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.12"
+            android:layout_marginBottom="14dp" />
 
         <LinearLayout
             android:id="@+id/protocol_cards_row"
@@ -108,25 +125,22 @@
             android:orientation="horizontal"
             android:layout_marginBottom="40dp">
 
-            <!-- AirPlay card -->
             <include
                 android:id="@+id/card_airplay"
                 layout="@layout/card_protocol_status"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="14dp" />
 
-            <!-- Miracast card -->
             <include
                 android:id="@+id/card_miracast"
                 layout="@layout/card_protocol_status"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="14dp" />
 
-            <!-- Cast card -->
             <include
                 android:id="@+id/card_cast"
                 layout="@layout/card_protocol_status"
@@ -136,60 +150,83 @@
 
         </LinearLayout>
 
-        <!-- ── Section: Service controls ──────────────────────────────── -->
+        <!-- ── Section: Service controls ──────────────────────────── -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/section_controls"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp"
             android:textAllCaps="true"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="12dp" />
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.12"
+            android:layout_marginBottom="14dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <Button
                 android:id="@+id/btn_start"
                 android:layout_width="wrap_content"
-                android:layout_height="56dp"
+                android:layout_height="52dp"
                 android:layout_marginEnd="12dp"
-                android:paddingHorizontal="24dp"
+                android:paddingHorizontal="28dp"
                 android:text="@string/action_start"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium"
                 android:background="@drawable/btn_control_selector"
                 android:focusable="true"
+                android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusRight="@id/btn_stop" />
 
             <Button
                 android:id="@+id/btn_stop"
                 android:layout_width="wrap_content"
-                android:layout_height="56dp"
+                android:layout_height="52dp"
                 android:layout_marginEnd="12dp"
-                android:paddingHorizontal="24dp"
+                android:paddingHorizontal="28dp"
                 android:text="@string/action_stop"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium"
                 android:background="@drawable/btn_control_selector"
                 android:focusable="true"
+                android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusLeft="@id/btn_start"
                 android:nextFocusRight="@id/btn_restart" />
 
             <Button
                 android:id="@+id/btn_restart"
                 android:layout_width="wrap_content"
-                android:layout_height="56dp"
-                android:paddingHorizontal="24dp"
+                android:layout_height="52dp"
+                android:paddingHorizontal="28dp"
                 android:text="@string/action_restart"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium"
                 android:background="@drawable/btn_control_selector"
                 android:focusable="true"
+                android:stateListAnimator="@animator/tv_focus_scale"
                 android:nextFocusLeft="@id/btn_stop" />
+
+            <!-- Spacer + creator watermark, right-aligned -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/home_creator_watermark"
+                android:textColor="@color/creator_watermark"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif"
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 
