@@ -2,6 +2,7 @@ package com.phairplay.service
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -9,6 +10,9 @@ import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * ServiceControllerTest — Unit tests for [ServiceController].
@@ -23,14 +27,12 @@ import org.junit.Test
  * - [ServiceController.restart] dispatches ACTION_RESTART to PhairPlayService
  * - Intent target component is PhairPlayService
  *
- * HOW: Context is mocked with MockK. We capture the Intent passed to
- * startForegroundService / startService and assert its action and target.
- *
- * NOTE: ServiceController uses Context.startForegroundService (API 26+) or
- * Context.startService (API < 26) — no AndroidX dependency.
- * In the JVM test environment Build.VERSION.SDK_INT = 34 (android-all stubs),
- * so startForegroundService is called for start() and restart().
+ * HOW: Context is mocked with MockK. Robolectric provides real Intent and
+ * Build.VERSION implementations. @Config(sdk=[O]) sets SDK_INT=26 so
+ * startForegroundServiceCompat() takes the startForegroundService branch.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [Build.VERSION_CODES.Q]) // Q=29 satisfies firetv minSdk=25 and googletv minSdk=29
 class ServiceControllerTest {
 
     private lateinit var context: Context
@@ -39,6 +41,7 @@ class ServiceControllerTest {
     @Before
     fun setup() {
         context = mockk(relaxed = true)
+        every { context.packageName } returns "com.phairplay"
         every { context.startForegroundService(capture(fgIntentSlot)) } returns null
     }
 
