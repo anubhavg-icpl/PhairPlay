@@ -3,11 +3,14 @@ package com.phairplay.airplay
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.media.MediaCodec
+import android.media.MediaFormat
 import com.phairplay.util.Logger
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.modes.SICBlockCipher
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
+import java.nio.ByteBuffer
 
 /**
  * AudioPlayer — Decrypts and plays the AirPlay audio stream.
@@ -34,8 +37,11 @@ class AudioPlayer {
     private var audioTrack: AudioTrack? = null
 
     // AES-128-CTR cipher engine (from Bouncy Castle)
-    // CTR mode: AES in counter mode — used for stream cipher encryption
     private var aesCipher: SICBlockCipher? = null
+
+    // MediaCodec for ALAC or AAC-ELD decoding — null when codec is raw PCM (no codec required)
+    private var mediaCodec: MediaCodec? = null
+    private val codecOutputInfo = MediaCodec.BufferInfo()
 
     @Volatile
     private var isInitialized = false
@@ -55,7 +61,26 @@ class AudioPlayer {
      * @param sampleRate Audio sample rate in Hz (typically 44100 or 48000)
      * @param channels   Number of audio channels (1 = mono, 2 = stereo)
      */
-    fun initialize(aesKey: ByteArray?, aesIv: ByteArray?, sampleRate: Int, channels: Int) {
+    /**
+     * Initializes the AudioPlayer.
+     *
+     * @param aesKey         16-byte AES-128 key (null = unencrypted)
+     * @param aesIv          16-byte IV (null = unencrypted)
+     * @param sampleRate     Audio sample rate in Hz
+     * @param channels       1 = mono, 2 = stereo
+     * @param codec          [AudioCodec] — drives MediaCodec MIME type selection
+     * @param alacMagicCookie 24-byte ALAC cookie for MediaCodec CSD-0 (ALAC streams only)
+     * @param aacEldConfig   AudioSpecificConfig bytes for MediaCodec CSD-0 (AAC-ELD streams only)
+     */
+    fun initialize(
+        aesKey: ByteArray?,
+        aesIv: ByteArray?,
+        sampleRate: Int,
+        channels: Int,
+        codec: AudioCodec = AudioCodec.ALAC,
+        alacMagicCookie: ByteArray? = null,
+        aacEldConfig: ByteArray? = null
+    ) {
         if (isInitialized) {
             Logger.w("AudioPlayer.initialize() called twice — ignoring")
             return
@@ -70,13 +95,19 @@ class AudioPlayer {
                 "AES IV must be exactly $AES_KEY_LENGTH_BYTES bytes, got ${aesIv?.size}"
             }
             initializeCipher(aesKey!!, aesIv!!)
-            Logger.i("Initializing AudioPlayer (encrypted): ${sampleRate}Hz, $channels channels")
+            Logger.i("Initializing AudioPlayer (encrypted, $codec): ${sampleRate}Hz, $channels ch")
         } else {
-            Logger.i("Initializing AudioPlayer (unencrypted): ${sampleRate}Hz, $channels channels")
+            Logger.i("Initializing AudioPlayer (unencrypted, $codec): ${sampleRate}Hz, $channels ch")
+        }
+
+        // Set up MediaCodec decoder for ALAC or AAC-ELD
+        when (codec) {
+            AudioCodec.ALAC    -> initializeAlacDecoder(sampleRate, channels, alacMagicCookie)
+            AudioCodec.AAC_ELD -> initializeAacEldDecoder(sampleRate, channels, aacEldConfig)
+            AudioCodec.UNKNOWN -> Unit  // no decoder — caller should not send audio
         }
 
         initializeAudioTrack(sampleRate, channels)
-
         isInitialized = true
     }
 
@@ -104,23 +135,52 @@ class AudioPlayer {
         }
 
         try {
-            // Step 1: Strip the RTP header to get the encrypted audio payload
-            // RTP header is always at least 12 bytes (RFC 3550)
             if (rtpPacket.size <= RTP_HEADER_MIN_BYTES) {
                 Logger.w("RTP packet too small (${rtpPacket.size} bytes), skipping")
                 return
             }
             val encryptedPayload = rtpPacket.copyOfRange(RTP_HEADER_MIN_BYTES, rtpPacket.size)
+            val payload = decrypt(encryptedPayload)
 
-            // Step 2: Decrypt if encrypted (cipher is null for unencrypted streams → pass-through)
-            val decryptedPayload = decrypt(encryptedPayload)
+            val codec = mediaCodec
+            if (codec == null) {
+                // No MediaCodec — should not happen for ALAC/AAC-ELD, but fail gracefully
+                audioTrack?.write(payload, 0, payload.size, AudioTrack.WRITE_NON_BLOCKING)
+                return
+            }
 
-            // Step 3: Write to AudioTrack for playback
-            // WRITE_NON_BLOCKING returns immediately if the buffer is full (prevents stalls)
-            audioTrack?.write(decryptedPayload, 0, decryptedPayload.size, AudioTrack.WRITE_NON_BLOCKING)
+            // ── Feed compressed frame into MediaCodec ────────────────────────
+            val inputIdx = codec.dequeueInputBuffer(CODEC_TIMEOUT_US)
+            if (inputIdx >= 0) {
+                val inputBuf = codec.getInputBuffer(inputIdx)!!
+                inputBuf.clear()
+                inputBuf.put(payload)
+                codec.queueInputBuffer(inputIdx, 0, payload.size, System.nanoTime() / 1000L, 0)
+            }
+
+            // ── Drain all available decoded PCM output ────────────────────────
+            drainCodecOutput(codec)
 
         } catch (e: Exception) {
             Logger.e("Error playing audio packet", e)
+        }
+    }
+
+    private fun drainCodecOutput(codec: MediaCodec) {
+        while (true) {
+            val outputIdx = codec.dequeueOutputBuffer(codecOutputInfo, 0L)
+            when {
+                outputIdx >= 0 -> {
+                    val outBuf: ByteBuffer = codec.getOutputBuffer(outputIdx) ?: break
+                    val pcm = ByteArray(codecOutputInfo.size)
+                    outBuf.position(codecOutputInfo.offset)
+                    outBuf.get(pcm, 0, codecOutputInfo.size)
+                    audioTrack?.write(pcm, 0, pcm.size, AudioTrack.WRITE_NON_BLOCKING)
+                    codec.releaseOutputBuffer(outputIdx, false)
+                }
+                outputIdx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> { /* format change, OK */ }
+                else -> break
+            }
         }
     }
 
@@ -135,14 +195,66 @@ class AudioPlayer {
     fun release() {
         Logger.d("Releasing AudioPlayer")
         try {
+            mediaCodec?.stop()
+            mediaCodec?.release()
             audioTrack?.stop()
             audioTrack?.release()
         } catch (e: Exception) {
-            Logger.e("Error releasing AudioTrack (non-fatal)", e)
+            Logger.e("Error releasing audio resources (non-fatal)", e)
         } finally {
+            mediaCodec = null
             audioTrack = null
-            aesCipher = null
+            aesCipher  = null
             isInitialized = false
+        }
+    }
+
+    /**
+     * Initializes an ALAC MediaCodec decoder with the 24-byte magic cookie as CSD-0.
+     *
+     * WHY: Android's AudioTrack does not accept ALAC frames — they must be decoded to PCM
+     * via MediaCodec first. The ALAC magic cookie (built from SDP fmtp parameters) tells
+     * MediaCodec the frame size, sample rate, bit depth, and number of channels.
+     */
+    private fun initializeAlacDecoder(sampleRate: Int, channels: Int, cookie: ByteArray?) {
+        if (cookie == null || cookie.size != 24) {
+            Logger.w("ALAC: no/invalid magic cookie (${cookie?.size} bytes) — skipping MediaCodec")
+            return
+        }
+        try {
+            val format = MediaFormat.createAudioFormat(MIME_ALAC, sampleRate, channels)
+            format.setByteBuffer("csd-0", ByteBuffer.wrap(cookie))
+            val codec = MediaCodec.createDecoderByType(MIME_ALAC)
+            codec.configure(format, null, null, 0)
+            codec.start()
+            mediaCodec = codec
+            Logger.i("ALAC MediaCodec initialized (${sampleRate}Hz, $channels ch)")
+        } catch (e: Exception) {
+            Logger.e("Failed to initialize ALAC MediaCodec", e)
+        }
+    }
+
+    /**
+     * Initializes an AAC-ELD MediaCodec decoder with the AudioSpecificConfig as CSD-0.
+     *
+     * WHY: AAC-ELD (profile 39) frames from AirPlay are raw compressed audio — they must
+     * be decoded by MediaCodec before AudioTrack can play them.
+     */
+    private fun initializeAacEldDecoder(sampleRate: Int, channels: Int, aacConfig: ByteArray?) {
+        if (aacConfig == null) {
+            Logger.w("AAC-ELD: no AudioSpecificConfig from SDP — skipping MediaCodec")
+            return
+        }
+        try {
+            val format = MediaFormat.createAudioFormat(MIME_AAC, sampleRate, channels)
+            format.setByteBuffer("csd-0", ByteBuffer.wrap(aacConfig))
+            val codec = MediaCodec.createDecoderByType(MIME_AAC)
+            codec.configure(format, null, null, 0)
+            codec.start()
+            mediaCodec = codec
+            Logger.i("AAC-ELD MediaCodec initialized (${sampleRate}Hz, $channels ch)")
+        } catch (e: Exception) {
+            Logger.e("Failed to initialize AAC-ELD MediaCodec", e)
         }
     }
 
@@ -240,11 +352,14 @@ class AudioPlayer {
     }
 
     companion object {
-        // AES-128 key length in bytes (128 bits / 8 = 16 bytes)
         private const val AES_KEY_LENGTH_BYTES = 16
-
-        // Minimum RTP header size per RFC 3550 (12 bytes)
-        // Real packets may have extensions, but we always skip at least 12 bytes
         private const val RTP_HEADER_MIN_BYTES = 12
+
+        // MediaCodec MIME types for AirPlay audio codecs
+        private const val MIME_ALAC = "audio/alac"
+        private const val MIME_AAC  = "audio/mp4a-latm"
+
+        // dequeueInputBuffer timeout: 10 ms — enough to get a buffer without blocking the RTP thread
+        private const val CODEC_TIMEOUT_US = 10_000L
     }
 }

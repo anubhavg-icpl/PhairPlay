@@ -73,6 +73,9 @@ class AirPlayReceiver(
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
+    // HAP pairing — created once, identity persisted across sessions
+    private val pairing = AirPlayPairing(context)
+
     // Child components
     private var mdnsService: MdnsService? = null
     private var rtspHandler: RtspHandler? = null
@@ -139,6 +142,7 @@ class AirPlayReceiver(
         mdnsService = MdnsService(
             context = context,
             onStateChange = { state -> emitState(state) },
+            ltpk = pairing.getLtpk(),
             onActualNameRegistered = { actualName -> onActualNameRegistered(actualName) }
         ).also { it.start(displayName.ifBlank { null }) }
         Logger.d("mDNS service started")
@@ -148,7 +152,8 @@ class AirPlayReceiver(
         rtspHandler = RtspHandler(
             videoSurfaceProvider = videoSurfaceProvider,
             onStreamingStarted = { session -> onStreamingStarted(session) },
-            onStreamingStopped = { onStreamingStopped() }
+            onStreamingStopped = { onStreamingStopped() },
+            pairing = pairing
         ).also { it.start(scope) }
         Logger.d("RTSP handler started on port 7000")
     }
@@ -247,10 +252,14 @@ class AirPlayReceiver(
     private fun startAudioPlayer(session: SessionDescription) {
         audioPlayer = AudioPlayer().also { player ->
             player.initialize(
-                aesKey     = session.aesKey.takeIf { session.isAudioEncrypted },
-                aesIv      = session.aesIv.takeIf  { session.isAudioEncrypted },
-                sampleRate = session.sampleRate,
-                channels   = session.channels
+                aesKey          = session.aesKey.takeIf { session.isAudioEncrypted },
+                aesIv           = session.aesIv.takeIf  { session.isAudioEncrypted },
+                sampleRate      = session.sampleRate,
+                channels        = session.channels,
+                codec           = session.audioCodec,
+                alacMagicCookie = if (session.audioCodec == AudioCodec.ALAC)
+                                      session.buildAlacMagicCookie() else null,
+                aacEldConfig    = session.aacEldConfig
             )
         }
         Logger.i("AudioPlayer started (${session.sampleRate}Hz × ${session.channels}ch, " +
