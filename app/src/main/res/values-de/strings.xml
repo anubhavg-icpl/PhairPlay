@@ -43,8 +43,8 @@
     <string name="action_restart">Neustart</string>
 
     <!-- ── Notification ────────────────────────────────────────── -->
-    <string name="notification_channel_name">PhairPlay-Dienst</string>
-    <string name="notification_channel_description">Benachrichtigung für den AirPlay/Miracast/Cast-Empfänger-Dienst</string>
+    <string name="notification_channel_name">Aervox-Dienst</string>
+    <string name="notification_channel_description">Benachrichtigung für den Aervox AirPlay/Miracast/Cast-Empfänger-Dienst</string>
     <string name="notification_status_running">Empfänger aktiv — Werbung im Netzwerk</string>
     <string name="notification_status_stopped">Empfänger gestoppt</string>
 

@@ -9,16 +9,21 @@
 <resources>
 
     <!-- ── App-wide ────────────────────────────────────────────── -->
-    <string name="app_name">PhairPlay</string>
+    <string name="app_name">Aervox</string>
+    <string name="app_tagline">AirPlay · Miracast · Cast</string>
 
     <!-- ── Navigation ──────────────────────────────────────────── -->
     <string name="nav_home">Home</string>
     <string name="nav_settings">Settings</string>
+    <!-- Creator attribution shown below app name in nav panel -->
+    <string name="nav_tagline">by Anubhav Gain</string>
 
     <!-- ── HomeFragment ────────────────────────────────────────── -->
     <string name="home_title">Ready for connections</string>
     <!-- %1$s = device name shown in sender pickers -->
     <string name="home_device_visible_as">Visible as: %1$s</string>
+    <!-- Creator watermark on home screen -->
+    <string name="home_creator_watermark">by Anubhav Gain</string>
 
     <!-- ── Protocol names ──────────────────────────────────────── -->
     <string name="protocol_airplay">AirPlay</string>
@@ -54,8 +59,8 @@
     <string name="action_restart">Restart</string>
 
     <!-- ── Notification ────────────────────────────────────────── -->
-    <string name="notification_channel_name">PhairPlay Service</string>
-    <string name="notification_channel_description">Persistent notification for the AirPlay/Miracast/Cast receiver service</string>
+    <string name="notification_channel_name">Aervox Service</string>
+    <string name="notification_channel_description">Persistent notification for the Aervox AirPlay/Miracast/Cast receiver service</string>
     <string name="notification_status_running">Receiver active — advertising on network</string>
     <string name="notification_status_stopped">Receiver stopped</string>
     <!-- %1$s = sender device name -->
@@ -77,7 +82,7 @@
     <!-- %1$s = the actual mDNS-registered name (may differ from entered name on collision) -->
     <string name="setting_display_name_collision_note">Registered as: %1$s</string>
     <string name="setting_airplay_enabled">AirPlay Receiver</string>
-    <string name="setting_airplay_subtitle">Accept connections from macOS</string>
+    <string name="setting_airplay_subtitle">Accept connections from macOS and iOS</string>
     <string name="setting_miracast_enabled">Miracast Receiver</string>
     <string name="setting_miracast_subtitle">Accept connections from Windows and Android</string>
     <string name="setting_cast_enabled">Google Cast Receiver</string>
@@ -90,10 +95,19 @@
     <string name="setting_version">Version</string>
     <string name="setting_reset_defaults">Reset to defaults</string>
 
-    <!-- ── Waiting screen (legacy, used by WaitingScreen view) ─── -->
+    <!-- ── About / Creator ───────────────────────────────────── -->
+    <string name="about_creator_label">Creator</string>
+    <string name="about_creator_name">Anubhav Gain</string>
+    <string name="about_creator_role">Software Engineer &amp; Security Researcher</string>
+    <string name="about_creator_company">CEO, TechAnv Consulting</string>
+    <string name="about_creator_github">github.com/mranv</string>
+    <string name="about_creator_website">mranv.github.io</string>
+
+    <!-- ── Waiting screen ─────────────────────────────────────── -->
     <string name="waiting_title">Ready for AirPlay</string>
-    <string name="waiting_subtitle">Open AirPlay on your Mac and select this device</string>
+    <string name="waiting_subtitle">Open AirPlay on your Mac or iPhone and select this device</string>
     <string name="waiting_device_label">This device:</string>
+    <string name="waiting_creator_watermark">by Anubhav Gain</string>
     <string name="streaming_hint">Press Back to stop streaming</string>
 
     <!-- ── Error messages ──────────────────────────────────────── -->

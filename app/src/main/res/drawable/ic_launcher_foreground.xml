@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Aervox launcher icon foreground.
+  Design: Bold letter "A" (stroked, left half) + AirPlay signal arcs (right half).
+  White on transparent. 108×108 dp viewport; adaptive icon safe zone: 72×72 dp centered.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Letter "A" — bold stroked style, centered in left half of safe zone -->
+
+    <!-- Left leg -->
+    <path
+        android:fillAlpha="0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:pathData="M 25,80 L 37,28" />
+
+    <!-- Right leg -->
+    <path
+        android:fillAlpha="0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:pathData="M 49,80 L 37,28" />
+
+    <!-- Crossbar (at ~55% height of the letter body) -->
+    <path
+        android:fillAlpha="0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7.5"
+        android:strokeLineCap="round"
+        android:pathData="M 30,57 L 44,57" />
+
+    <!-- AirPlay icon: screen reflection triangle + three signal arcs (right half) -->
+
+    <!-- Screen triangle (pointing up, representing the display) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 72,76 L 62,92 L 82,92 Z" />
+
+    <!-- Innermost arc -->
+    <path
+        android:fillAlpha="0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M 62,70 A 10,10 0 0 1 82,70" />
+
+    <!-- Middle arc -->
+    <path
+        android:fillAlpha="0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M 56,64 A 16,16 0 0 1 88,64" />
+
+    <!-- Outermost arc -->
+    <path
+        android:fillAlpha="0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M 50,58 A 22,22 0 0 1 94,58" />
+
+</vector>
