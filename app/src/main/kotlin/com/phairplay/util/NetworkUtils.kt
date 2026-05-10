@@ -118,7 +118,7 @@ object NetworkUtils {
     }
 
     // Constants
-    private const val DEFAULT_DEVICE_NAME = "PhairPlay"
+    private const val DEFAULT_DEVICE_NAME = "Aervox"
     private const val FALLBACK_MAC_ADDRESS = "aa:bb:cc:dd:ee:ff"
     private const val PREF_KEY_DEVICE_UUID = "phairplay_device_uuid"
 }

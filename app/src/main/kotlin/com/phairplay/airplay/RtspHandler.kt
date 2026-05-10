@@ -41,7 +41,9 @@ open class RtspHandler(
     private val onStreamingStarted: (session: SessionDescription) -> Unit,
     private val onStreamingStopped: () -> Unit,
     // HAP pairing handler — null in unit tests that don't exercise pairing endpoints
-    private val pairing: AirPlayPairing? = null
+    private val pairing: AirPlayPairing? = null,
+    // Stable device UUID for the /info pi field — matches the mDNS TXT record value
+    private val deviceUuid: String = ""
 ) {
 
     // The server socket that accepts incoming AirPlay connections on port 7000
@@ -349,7 +351,7 @@ open class RtspHandler(
             "features"  to AIRPLAY_FEATURES_64,
             "model"     to "AppleTV5,3",
             "pk"        to ltpk,
-            "pi"        to "00000000-0000-0000-0000-000000000000",
+            "pi"        to deviceUuid.ifEmpty { "00000000-0000-0000-0000-000000000000" },
             "vv"        to 2L,
             "srcvers"   to "220.68"
         )
@@ -568,7 +570,7 @@ open class RtspHandler(
         val sb = StringBuilder()
         sb.append("RTSP/1.0 ${response.statusCode} ${response.statusMessage}\r\n")
         sb.append("CSeq: $currentCSeq\r\n")
-        sb.append("Server: PhairPlay/1.0\r\n")
+        sb.append("Server: AirTunes/220.68\r\n")
         response.headers.forEach { (key, value) -> sb.append("$key: $value\r\n") }
 
         val binary = response.binaryBody
@@ -618,7 +620,7 @@ open class RtspHandler(
         private const val MAX_MESSAGE_BYTES = 65536
 
         /** Fixed session ID — one session at a time. */
-        private const val SESSION_ID = "PhairPlaySession"
+        private const val SESSION_ID = "AervoxSession"
 
         /**
          * UDP port for receiving audio RTP packets.

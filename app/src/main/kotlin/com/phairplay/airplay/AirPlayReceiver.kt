@@ -1,9 +1,11 @@
 package com.phairplay.airplay
 
 import android.content.Context
+import android.net.wifi.WifiManager
 import android.view.Surface
 import com.phairplay.service.ProtocolState
 import com.phairplay.util.Logger
+import com.phairplay.util.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -76,6 +78,11 @@ class AirPlayReceiver(
     // HAP pairing — created once, identity persisted across sessions
     private val pairing = AirPlayPairing(context)
 
+    // Wi-Fi multicast lock — held while advertising so the Wi-Fi driver passes mDNS
+    // multicast packets up the stack. No-op on Ethernet (WifiManager returns null).
+    // Must be held continuously; releasing it causes the chipset to re-enable filtering.
+    private var multicastLock: WifiManager.MulticastLock? = null
+
     // Child components
     private var mdnsService: MdnsService? = null
     private var rtspHandler: RtspHandler? = null
@@ -97,6 +104,7 @@ class AirPlayReceiver(
      */
     fun start() {
         Logger.i("AirPlayReceiver starting (displayName='$displayName')")
+        acquireMulticastLock()
         scope.launch {
             try {
                 startTimingHandler()
@@ -127,6 +135,7 @@ class AirPlayReceiver(
         } catch (e: Exception) {
             Logger.e("Error during AirPlayReceiver stop", e)
         } finally {
+            releaseMulticastLock()
             scope.cancel()
         }
     }
@@ -153,7 +162,8 @@ class AirPlayReceiver(
             videoSurfaceProvider = videoSurfaceProvider,
             onStreamingStarted = { session -> onStreamingStarted(session) },
             onStreamingStopped = { onStreamingStopped() },
-            pairing = pairing
+            pairing = pairing,
+            deviceUuid = NetworkUtils.getPersistentUuid(context)
         ).also { it.start(scope) }
         Logger.d("RTSP handler started on port 7000")
     }
@@ -313,6 +323,39 @@ class AirPlayReceiver(
         videoDecoder = null
         audioPlayer?.release()
         audioPlayer = null
+    }
+
+    // ─── Private: multicast lock ─────────────────────────────────────────────
+
+    /**
+     * Acquires a Wi-Fi multicast lock so the chipset passes inbound mDNS multicast
+     * packets up to the NSD daemon. Without this, many Wi-Fi drivers silently discard
+     * all multicast traffic, breaking discovery even at the system mDNS layer.
+     * On Ethernet the WifiManager is unavailable; the call is a safe no-op.
+     */
+    private fun acquireMulticastLock() {
+        try {
+            val wm = context.applicationContext
+                .getSystemService(Context.WIFI_SERVICE) as? WifiManager ?: return
+            multicastLock = wm.createMulticastLock("aervox_mdns").also { lock ->
+                lock.setReferenceCounted(false)
+                lock.acquire()
+                Logger.d("Wi-Fi MulticastLock acquired")
+            }
+        } catch (e: Exception) {
+            Logger.w("Could not acquire MulticastLock (Ethernet path? — safe to ignore): ${e.message}")
+        }
+    }
+
+    private fun releaseMulticastLock() {
+        try {
+            multicastLock?.let { if (it.isHeld) it.release() }
+            Logger.d("Wi-Fi MulticastLock released")
+        } catch (e: Exception) {
+            Logger.w("MulticastLock release error (non-fatal): ${e.message}")
+        } finally {
+            multicastLock = null
+        }
     }
 
     // ─── Private: state emission ─────────────────────────────────────────────
