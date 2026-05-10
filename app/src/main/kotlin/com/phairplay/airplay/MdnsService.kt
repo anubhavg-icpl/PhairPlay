@@ -36,6 +36,12 @@ class MdnsService(
     private val context: Context,
     private val onStateChange: (ProtocolState) -> Unit = {},
     /**
+     * Ed25519 long-term public key (32 bytes) — advertised in `pk` TXT records so that
+     * iOS 14+ can validate the device identity before attempting pair-verify.
+     * Pass null to omit the `pk` record (older AirPlay clients don't require it).
+     */
+    private val ltpk: ByteArray? = null,
+    /**
      * Called with the actual mDNS service name after registration completes.
      *
      * Android's NsdManager resolves name collisions automatically: if another device
@@ -173,6 +179,8 @@ class MdnsService(
             setAttribute("vv", "2")                             // AirPlay protocol version 2
             setAttribute("pi", NetworkUtils.getPersistentUuid(context))
             setAttribute("flags", "0x4")                        // Screen-mirroring receiver
+            // pk = Ed25519 LTPK hex — required by iOS 14+ for pair-verify
+            ltpk?.let { setAttribute("pk", it.joinToString("") { b -> "%02x".format(b) }) }
         }
 
         airPlayListener = createRegistrationListener(
@@ -214,12 +222,15 @@ class MdnsService(
             setAttribute("cn", "0,1,2,3")        // Cipher numbers (encryption types)
             setAttribute("da", "true")             // Digest authentication capable
             setAttribute("et", "0,3,5")            // Encryption types supported
+            setAttribute("ft", AIRPLAY_FEATURES)   // Features (required by RAOP for AirPlay 2)
             setAttribute("md", "0,1,2")            // Metadata types supported
             setAttribute("sv", "false")            // Software volume control
             setAttribute("tp", "UDP")              // Transport for audio RTP
             setAttribute("vn", "65537")            // Version number (required)
             setAttribute("vs", AIRPLAY_SERVER_VERSION)
             setAttribute("am", AIRPLAY_MODEL)
+            // pk = Ed25519 LTPK hex — required by iOS 14+ for pair-verify
+            ltpk?.let { setAttribute("pk", it.joinToString("") { b -> "%02x".format(b) }) }
         }
 
         raopListener = createRegistrationListener(

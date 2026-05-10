@@ -70,8 +70,15 @@ object SdpParser {
         var aesKey: ByteArray? = null
         var aesIv: ByteArray? = null
 
-        // ALAC frame size
-        var alacFramesPerPacket = 352
+        // ALAC codec parameters (from fmtp)
+        var alacFramesPerPacket    = 352
+        var alacBitDepth           = 16
+        var alacRiceHistoryMult    = 40
+        var alacRiceInitialHistory = 10
+        var alacRiceLimit          = 14
+        var alacMaxRun             = 255
+        // AAC-ELD AudioSpecificConfig extracted from fmtp config= field
+        var aacEldConfig: ByteArray? = null
 
         for (line in lines) {
             when {
@@ -102,11 +109,17 @@ object SdpParser {
                                 if (rate > 0) sampleRate = rate
                                 if (ch > 0) channels = ch
                             }
-                            parseAlacFmtp(attr)?.let { (frames, rate, ch) ->
-                                alacFramesPerPacket = frames
-                                if (rate > 0) sampleRate = rate
-                                if (ch > 0) channels = ch
+                            parseAlacFmtp(attr)?.let { p ->
+                                alacFramesPerPacket    = p.framesPerPacket
+                                alacBitDepth           = p.bitDepth
+                                alacRiceHistoryMult    = p.riceHistoryMult
+                                alacRiceInitialHistory = p.riceInitialHistory
+                                alacRiceLimit          = p.riceLimit
+                                alacMaxRun             = p.maxRun
+                                if (p.sampleRate > 0) sampleRate = p.sampleRate
+                                if (p.channels > 0) channels = p.channels
                             }
+                            parseAacEldConfig(attr)?.let { aacEldConfig = it }
                             parseAesKey(attr)?.let { aesKey = it }
                             parseAesIv(attr)?.let { aesIv = it }
                         }
@@ -126,21 +139,27 @@ object SdpParser {
         Logger.i("SdpParser: hasVideo=$hasVideo hasAudio=$hasAudio codec=$audioCodec")
 
         return SessionDescription(
-            hasVideo = hasVideo,
-            hasAudio = hasAudio,
-            videoPort = videoPort,
-            videoPayloadType = videoPayloadType,
-            spsBytes = spsBytes,
-            ppsBytes = ppsBytes,
-            h264ProfileLevelId = h264ProfileLevelId,
-            audioPort = audioPort,
-            audioPayloadType = audioPayloadType,
-            audioCodec = audioCodec,
-            sampleRate = sampleRate,
-            channels = channels,
-            aesKey = aesKey,
-            aesIv = aesIv,
-            alacFramesPerPacket = alacFramesPerPacket
+            hasVideo               = hasVideo,
+            hasAudio               = hasAudio,
+            videoPort              = videoPort,
+            videoPayloadType       = videoPayloadType,
+            spsBytes               = spsBytes,
+            ppsBytes               = ppsBytes,
+            h264ProfileLevelId     = h264ProfileLevelId,
+            audioPort              = audioPort,
+            audioPayloadType       = audioPayloadType,
+            audioCodec             = audioCodec,
+            sampleRate             = sampleRate,
+            channels               = channels,
+            aesKey                 = aesKey,
+            aesIv                  = aesIv,
+            alacFramesPerPacket    = alacFramesPerPacket,
+            alacBitDepth           = alacBitDepth,
+            alacRiceHistoryMult    = alacRiceHistoryMult,
+            alacRiceInitialHistory = alacRiceInitialHistory,
+            alacRiceLimit          = alacRiceLimit,
+            alacMaxRun             = alacMaxRun,
+            aacEldConfig           = aacEldConfig
         )
     }
 
@@ -211,22 +230,56 @@ object SdpParser {
     }
 
     /**
-     * Parses an ALAC `fmtp` attribute to extract frames-per-packet, sample rate, and channels.
+     * Parses an ALAC `fmtp` attribute.
      *
-     * ALAC fmtp format (RFC 3640 / Apple spec):
-     * `fmtp:96 <frameLen> <version> <bitDepth> <ricePdBound> <riceDynamic> <riceHist>
-     *          <numChannels> <maxRun> <maxFrameBytes> <avgBitRate> <sampleRate>`
-     * Fields: index 0 = frameLen, index 6 = numChannels, index 10 = sampleRate
+     * ALAC fmtp format (Apple spec, space-separated integers):
+     * `fmtp:96 frameLen compatVer bitDepth riceHistMult riceInitHist riceLimit numCh maxRun maxFrameBytes avgBitRate sampleRate`
      *
-     * @return Triple(alacFramesPerPacket, sampleRate, channels) or null if not an ALAC fmtp.
+     * @return [AlacFmtpParams] or null if not an ALAC fmtp line (AAC fmtp has semicolons, not spaces).
      */
-    private fun parseAlacFmtp(attr: String): Triple<Int, Int, Int>? {
+    private fun parseAlacFmtp(attr: String): AlacFmtpParams? {
         if (!attr.startsWith("fmtp:")) return null
-        val tokens = attr.substringAfter(" ").split(" ")
-        val framesPerPacket = tokens.getOrNull(0)?.toIntOrNull() ?: return null
-        val numChannels = tokens.getOrNull(6)?.toIntOrNull() ?: 0
-        val sampleRate = tokens.getOrNull(10)?.toIntOrNull() ?: 0
-        return Triple(framesPerPacket, sampleRate, numChannels)
+        val content = attr.substringAfter(" ")
+        // ALAC fmtp uses space-separated integers; AAC fmtp uses key=value pairs with semicolons
+        if (content.contains('=')) return null
+        val tokens = content.split(" ")
+        val framesPerPacket    = tokens.getOrNull(0)?.toIntOrNull()  ?: return null
+        val bitDepth           = tokens.getOrNull(2)?.toIntOrNull()  ?: 16
+        val riceHistoryMult    = tokens.getOrNull(3)?.toIntOrNull()  ?: 40
+        val riceInitialHistory = tokens.getOrNull(4)?.toIntOrNull()  ?: 10
+        val riceLimit          = tokens.getOrNull(5)?.toIntOrNull()  ?: 14
+        val numChannels        = tokens.getOrNull(6)?.toIntOrNull()  ?: 0
+        val maxRun             = tokens.getOrNull(7)?.toIntOrNull()  ?: 255
+        val sampleRate         = tokens.getOrNull(10)?.toIntOrNull() ?: 0
+        return AlacFmtpParams(
+            framesPerPacket    = framesPerPacket,
+            bitDepth           = bitDepth,
+            riceHistoryMult    = riceHistoryMult,
+            riceInitialHistory = riceInitialHistory,
+            riceLimit          = riceLimit,
+            channels           = numChannels,
+            maxRun             = maxRun,
+            sampleRate         = sampleRate
+        )
+    }
+
+    /**
+     * Parses the AAC-ELD AudioSpecificConfig from an AAC fmtp attribute.
+     *
+     * Example: `fmtp:96 streamtype=5;profile-level-id=15;mode=AAC-hbr;config=F8E85000`
+     * The `config=` field is the 2–4 byte AudioSpecificConfig in hex.
+     *
+     * @return AudioSpecificConfig bytes, or null if not an AAC fmtp or config absent.
+     */
+    private fun parseAacEldConfig(attr: String): ByteArray? {
+        if (!attr.startsWith("fmtp:")) return null
+        val content = attr.substringAfter(" ")
+        val match = Regex("(?i)config=([0-9A-Fa-f]+)").find(content) ?: return null
+        val hex = match.groupValues[1]
+        if (hex.length % 2 != 0) return null
+        return ByteArray(hex.length / 2) { i ->
+            hex.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+        }
     }
 
     /**
@@ -309,7 +362,15 @@ data class SessionDescription(
     val channels: Int = 2,
     val aesKey: ByteArray? = null,
     val aesIv: ByteArray? = null,
-    val alacFramesPerPacket: Int = 352,
+    // ALAC fmtp parameters (all 11 fields from the SDP fmtp line)
+    val alacFramesPerPacket   : Int = 352,
+    val alacBitDepth          : Int = 16,
+    val alacRiceHistoryMult   : Int = 40,
+    val alacRiceInitialHistory: Int = 10,
+    val alacRiceLimit         : Int = 14,
+    val alacMaxRun            : Int = 255,
+    // AAC-ELD AudioSpecificConfig bytes extracted from fmtp config= field
+    val aacEldConfig: ByteArray? = null,
     /**
      * The sender's identifier extracted from the RTSP ANNOUNCE `User-Agent` header.
      *
@@ -326,6 +387,38 @@ data class SessionDescription(
     /** True if this is a pure audio stream (no video — e.g., music from Apple Music). */
     val isAudioOnly: Boolean
         get() = !hasVideo && hasAudio
+
+    /**
+     * Builds the 24-byte ALAC magic cookie required by Android MediaCodec for `audio/alac`.
+     *
+     * Layout (all big-endian):
+     *   [0..3]   framesPerPacket  (4 bytes)
+     *   [4]      compatibleVersion = 0
+     *   [5]      bitDepth
+     *   [6]      riceHistoryMult
+     *   [7]      riceInitialHistory
+     *   [8]      riceLimit
+     *   [9]      numChannels
+     *   [10..11] maxRun           (2 bytes)
+     *   [12..15] maxFrameBytes = 0
+     *   [16..19] avgBitRate = 0
+     *   [20..23] sampleRate       (4 bytes)
+     */
+    fun buildAlacMagicCookie(): ByteArray {
+        val buf = java.nio.ByteBuffer.allocate(24).order(java.nio.ByteOrder.BIG_ENDIAN)
+        buf.putInt(alacFramesPerPacket)
+        buf.put(0.toByte())                      // compatibleVersion
+        buf.put(alacBitDepth.toByte())
+        buf.put(alacRiceHistoryMult.toByte())
+        buf.put(alacRiceInitialHistory.toByte())
+        buf.put(alacRiceLimit.toByte())
+        buf.put(channels.toByte())
+        buf.putShort(alacMaxRun.toShort())
+        buf.putInt(0)                            // maxFrameBytes
+        buf.putInt(0)                            // avgBitRate
+        buf.putInt(sampleRate)
+        return buf.array()
+    }
 
     // ByteArray fields break default data class equals/hashCode — override explicitly
     override fun equals(other: Any?): Boolean {
@@ -360,6 +453,18 @@ data class SessionDescription(
         return this.contentEquals(other)
     }
 }
+
+/** Parsed ALAC fmtp parameters — all values needed to build the 24-byte MediaCodec magic cookie. */
+data class AlacFmtpParams(
+    val framesPerPacket   : Int,
+    val bitDepth          : Int,
+    val riceHistoryMult   : Int,
+    val riceInitialHistory: Int,
+    val riceLimit         : Int,
+    val channels          : Int,
+    val maxRun            : Int,
+    val sampleRate        : Int
+)
 
 // ─── Companion constants (used in SdpParser + tests) ────────────────────────
 private const val DEFAULT_SAMPLE_RATE = 44100

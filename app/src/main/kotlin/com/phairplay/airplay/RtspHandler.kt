@@ -1,6 +1,7 @@
 package com.phairplay.airplay
 
 import com.phairplay.util.Logger
+import com.phairplay.util.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -38,7 +39,9 @@ open class RtspHandler(
     // Called lazily when RECORD is received — Surface is ready by then
     private val videoSurfaceProvider: () -> android.view.Surface?,
     private val onStreamingStarted: (session: SessionDescription) -> Unit,
-    private val onStreamingStopped: () -> Unit
+    private val onStreamingStopped: () -> Unit,
+    // HAP pairing handler — null in unit tests that don't exercise pairing endpoints
+    private val pairing: AirPlayPairing? = null
 ) {
 
     // The server socket that accepts incoming AirPlay connections on port 7000
@@ -251,7 +254,7 @@ open class RtspHandler(
         currentCSeq = headers["CSeq"]?.toIntOrNull() ?: 0
 
         val contentLength = headers["Content-Length"]?.toIntOrNull() ?: 0
-        val body = if (contentLength in 1..MAX_MESSAGE_BYTES) {
+        val bodyBytes = if (contentLength in 1..MAX_MESSAGE_BYTES) {
             val buf = ByteArray(contentLength)
             var read = 0
             while (read < contentLength) {
@@ -259,13 +262,19 @@ open class RtspHandler(
                 if (n == -1) return null
                 read += n
             }
-            String(buf, Charsets.UTF_8)
+            buf
         } else if (contentLength > MAX_MESSAGE_BYTES) {
             Logger.w("RTSP body too large ($contentLength bytes) — rejecting")
             return null
-        } else ""
+        } else ByteArray(0)
 
-        return RtspRequest(method = method, uri = uri, headers = headers, body = body)
+        return RtspRequest(
+            method    = method,
+            uri       = uri,
+            headers   = headers,
+            body      = String(bodyBytes, Charsets.UTF_8),
+            bodyBytes = bodyBytes
+        )
     }
 
     /**
@@ -300,8 +309,9 @@ open class RtspHandler(
      * @return An [RtspResponse] to send back to the client.
      */
     private fun routeRequest(request: RtspRequest, outputStream: OutputStream): RtspResponse {
-        Logger.d("RTSP ${request.method} ${request.uri}")
+        Logger.d("RTSP/HTTP ${request.method} ${request.uri}")
         return when (request.method) {
+            // Standard RTSP methods
             "OPTIONS"       -> handleOptionsInternal(request)
             "ANNOUNCE"      -> handleAnnounceInternal(request)
             "SETUP"         -> handleSetupInternal(request)
@@ -311,8 +321,83 @@ open class RtspHandler(
             "SET_PARAMETER" -> handleSetParameter(request)
             "FLUSH"         -> handleFlush(request)
             "PAUSE"         -> handlePauseInternal(request)
+            // HTTP-like endpoints on the same TCP connection (AirPlay 2 / HAP)
+            "GET"           -> when (request.uri) {
+                "/info"    -> handleGetInfo(request)
+                else       -> handleUnknownInternal(request)
+            }
+            "POST"          -> when {
+                request.uri == "/pair-setup"  -> handlePairSetup(request)
+                request.uri == "/pair-verify" -> handlePairVerify(request)
+                request.uri.startsWith("/fp-setup") -> handleFpSetup(request)
+                else -> handleUnknownInternal(request)
+            }
             else            -> handleUnknownInternal(request)
         }
+    }
+
+    /**
+     * Handles GET /info — returns device metadata as a binary plist.
+     *
+     * WHY: iOS/macOS queries /info BEFORE attempting to pair or stream. If this
+     * returns 501 or garbage, the client silently skips the device.
+     */
+    private fun handleGetInfo(request: RtspRequest): RtspResponse {
+        val ltpk = pairing?.getLtpk() ?: ByteArray(32)
+        val info = linkedMapOf<String, Any>(
+            "deviceID"  to NetworkUtils.getMacAddress(),
+            "features"  to AIRPLAY_FEATURES_64,
+            "model"     to "AppleTV5,3",
+            "pk"        to ltpk,
+            "pi"        to "00000000-0000-0000-0000-000000000000",
+            "vv"        to 2L,
+            "srcvers"   to "220.68"
+        )
+        val plist = BinaryPlistWriter.writeDict(info)
+        return RtspResponse(
+            statusCode  = 200,
+            statusMessage = "OK",
+            binaryBody  = plist,
+            contentType = "application/x-apple-binary-plist"
+        )
+    }
+
+    /**
+     * Handles POST /pair-setup — returns LTPK in TLV8 format so iOS can identify the receiver.
+     */
+    private fun handlePairSetup(request: RtspRequest): RtspResponse {
+        val p = pairing ?: return RtspResponse(statusCode = 501, statusMessage = "Not Implemented")
+        val response = p.handlePairSetup(request.bodyBytes)
+        return RtspResponse(
+            statusCode    = 200,
+            statusMessage = "OK",
+            binaryBody    = response,
+            contentType   = "application/octet-stream"
+        )
+    }
+
+    /**
+     * Handles POST /pair-verify — completes the X25519 ECDH session key exchange.
+     */
+    private fun handlePairVerify(request: RtspRequest): RtspResponse {
+        val p = pairing ?: return RtspResponse(statusCode = 501, statusMessage = "Not Implemented")
+        val response = p.handlePairVerify(request.bodyBytes)
+        return RtspResponse(
+            statusCode    = 200,
+            statusMessage = "OK",
+            binaryBody    = response,
+            contentType   = "application/octet-stream"
+        )
+    }
+
+    /**
+     * Handles POST /fp-setup — FairPlay setup bypass.
+     *
+     * For unencrypted AirPlay streams we return empty 200 OK.
+     * This lets iOS proceed to ANNOUNCE without FairPlay decryption.
+     */
+    private fun handleFpSetup(request: RtspRequest): RtspResponse {
+        return RtspResponse(statusCode = 200, statusMessage = "OK")
     }
 
     /**
@@ -484,17 +569,25 @@ open class RtspHandler(
         sb.append("RTSP/1.0 ${response.statusCode} ${response.statusMessage}\r\n")
         sb.append("CSeq: $currentCSeq\r\n")
         sb.append("Server: PhairPlay/1.0\r\n")
-        response.headers.forEach { (key, value) ->
-            sb.append("$key: $value\r\n")
+        response.headers.forEach { (key, value) -> sb.append("$key: $value\r\n") }
+
+        val binary = response.binaryBody
+        if (binary != null) {
+            response.contentType?.let { sb.append("Content-Type: $it\r\n") }
+            sb.append("Content-Length: ${binary.size}\r\n")
+            sb.append("\r\n")
+            outputStream.write(sb.toString().toByteArray(Charsets.US_ASCII))
+            outputStream.write(binary)
+        } else if (response.body.isNotEmpty()) {
+            val bodyBytes = response.body.toByteArray(Charsets.UTF_8)
+            sb.append("Content-Length: ${bodyBytes.size}\r\n")
+            sb.append("\r\n")
+            outputStream.write(sb.toString().toByteArray(Charsets.US_ASCII))
+            outputStream.write(bodyBytes)
+        } else {
+            sb.append("\r\n")
+            outputStream.write(sb.toString().toByteArray(Charsets.US_ASCII))
         }
-        if (response.body.isNotEmpty()) {
-            sb.append("Content-Length: ${response.body.length}\r\n")
-        }
-        sb.append("\r\n")
-        if (response.body.isNotEmpty()) {
-            sb.append(response.body)
-        }
-        outputStream.write(sb.toString().toByteArray(Charsets.UTF_8))
         outputStream.flush()
     }
 
@@ -536,6 +629,13 @@ open class RtspHandler(
 
         /** Fallback sender name when User-Agent header is absent or unparseable. */
         private const val DEFAULT_SENDER_NAME = "AirPlay Sender"
+
+        /**
+         * AirPlay 2 features as a 64-bit integer for the /info binary plist response.
+         * Combines the two 32-bit halves from the mDNS TXT record: "0x5A7FFFF7,0x1E"
+         *   lo = 0x5A7FFFF7, hi = 0x1E → combined = (0x1E.toLong() shl 32) or 0x5A7FFFF7L
+         */
+        private val AIRPLAY_FEATURES_64: Long = (0x1EL shl 32) or 0x5A7FFFF7L
     }
 }
 

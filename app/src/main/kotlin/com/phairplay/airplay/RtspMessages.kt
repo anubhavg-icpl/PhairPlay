@@ -15,7 +15,8 @@ data class RtspRequest(
     val method: String,
     val uri: String,
     val headers: Map<String, String>,
-    val body: String
+    val body: String,
+    val bodyBytes: ByteArray = ByteArray(0)
 )
 
 /**
@@ -33,5 +34,7 @@ data class RtspResponse(
     val statusCode: Int,
     val statusMessage: String,
     val headers: Map<String, String> = emptyMap(),
-    val body: String = ""
+    val body: String = "",
+    val binaryBody: ByteArray? = null,
+    val contentType: String? = null
 )
